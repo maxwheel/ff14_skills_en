@@ -245,7 +245,9 @@ class FF14skills:
                     iconSrc = td.find('img')['src']
                     # skill['icon'] = iconSrc
                     icon = self.handleIcon(iconSrc, jobKey)
-                    if icon: skill['icon'] = icon.split('.')[0]
+                    if icon:
+                        skill['icon'] = icon.split('.')[0]  # save img name
+                        # skill['img'] = iconSrc
                     skill['name'] = td.find('p').find('strong').get_text().strip("[\n\t ]")
                     if debug: print('skill name = {}'.format(skill['name']))
                 elif cls in ['classification', 'cast', 'recast']:
