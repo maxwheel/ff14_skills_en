@@ -5,7 +5,7 @@
 from urllib.request import urlopen,urlretrieve
 from urllib.error import HTTPError
 from bs4 import BeautifulSoup
-import os,re,json,sys
+import os,re,json,sys,datetime
 
 debug = False
 jobClasses = [
@@ -275,7 +275,9 @@ class FF14skills:
         print('-'*20, flush=True)
         jobKey = job['job']
         print('processing: '+jobKey, flush=True)
-        obj = BeautifulSoup(urlopen(self.getWebpageUrl(job['weburl'])), 'html5lib')
+        url = self.getWebpageUrl(job['weburl'])
+        if debug: print('job url:', url, flush=True)
+        obj = BeautifulSoup(urlopen(url), 'html5lib')
         tempContent = obj('div', class_=['js__select--pve','job__content--battle'])
         res = {'skillTypes':[], 'job':job}
         # save Trait individually, and put to the end of skillTypes
@@ -286,11 +288,21 @@ class FF14skills:
             updatedAt = item.find('p', class_='job__update')
             if updatedAt:
                 updatedAt = updatedAt.get_text().strip("[\n\t ]")
-                search = re.search(r'([0-9\-/].*)', updatedAt)
-                if search:
-                    updatedAt = '/'.join(search.groups())
-                res['updatedAt'] = updatedAt
-                print('{} skills updated at: {}'.format(jobKey, updatedAt))
+                if debug: print('updatedAt', updatedAt)
+                search = re.findall(r'([0-9/-]+)', updatedAt)
+                if search and len(search) > 0:
+                    if debug: print('searched.', search)
+                    lastSearch = search[-1]
+                    if lastSearch:
+                        if lastSearch.isdigit():
+                            try:
+                                date = datetime.date.fromtimestamp(int(lastSearch)).isoformat()
+                                res['updatedAt'] = date
+                            except:
+                                pass
+                        else:
+                            res['updatedAt'] = lastSearch
+                    print('{} skills updated at: {}'.format(jobKey, res['updatedAt']))
             # handle all type of skills
             skillType = ord('a') # set the number of skill type as a prefix
             for skillContent in skillContents:
